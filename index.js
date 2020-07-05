@@ -4,7 +4,8 @@ const bot = new Discord.Client();
 const puppeteer = require('puppeteer');
 const token = 'Njg5MjQ1NDgzNjYyNzA0Njgx.XnAUvQ.vdnzIZsVTS_XqX7qd-NnzkUv5ck';
 const fs = require('fs');
-let error = true;
+let runeError = true;
+let skillError = true;
 const PREFIX = '!';
 
 bot.on('ready', () => {
@@ -35,9 +36,10 @@ bot.on('message', async message => {
                     //.attachFiles(["./example.jpeg"])
                     //.setImage("attachment://example.jpeg")
                 message.channel.send(link).then(async(link) => {
-                    const img = await scrapeProduct(url);
-                    if(error == true) {
-                        console.log(error);
+                    const img = await scrapeRunes(url);
+                    const img2 = await scrapeSkills(url);
+                    if(runeError == true) {
+                        console.log(runeError);
                         const noChampion = new Discord.MessageEmbed()
                         .setColor("0xff0000")
                         .setTitle("Sorry :(")
@@ -58,13 +60,13 @@ bot.on('message', async message => {
                             .setColor("0x00ff00")
                             .attachFiles(["./runes11.jpeg"])
                             .setImage("attachment://runes11.jpeg")
-                        //const skill1 = new Discord.MessageEmbed()
-                        //    .setColor("0x00ff00")
-                        //    .attachFiles(["./skills1.jpeg"])
-                        //    .setImage("attachment://skills1.jpeg")
+                        const skill1 = new Discord.MessageEmbed()
+                            .setColor("0x00ff00")
+                            .attachFiles(["./skills1.jpeg"])
+                            .setImage("attachment://skills1.jpeg")
                         message.channel.send(link2).then(() => {
                             message.channel.send(link3);
-                            //message.channel.send(skill1);
+                            message.channel.send(skill1);
                             link.delete();
                         })
                     }
@@ -78,9 +80,9 @@ bot.on('message', async message => {
     }
 })
 
-const scrapeProduct = async(url) => {
-    error = false;
-    console.log(error);
+const scrapeRunes = async(url) => {
+    runeError = false;
+    console.log("runeError = " + runeError);
     const browser = await puppeteer.launch({headless:true, timeout: 0});
     const page = await browser.newPage();
     await page.goto(url, {waitUntil:'networkidle2'}); 
@@ -140,7 +142,41 @@ const scrapeProduct = async(url) => {
     
         await browser.close();
     }
+}
+
+const scrapeSkills = async(url) => {
+    skillError = false;
+    console.log("skillError = " + skillError);
+    const browser = await puppeteer.launch({headless:true, timeout: 0});
+    const page = await browser.newPage();
+    await page.goto(url, {waitUntil:'networkidle2'}); 
+    const rect = await page.evaluate(() => {
+        const element = document.querySelector('.skill-order');
+        console.log(element);
+        if(element == null) {
+            return null;
+        }
+        else {
+            const {x,y,width,height} = element.getBoundingClientRect();
+            console.log("beans");
+            console.log({x,y,width,height});
+            return {left: x, top: y, width, height};
+        }
+    });
+    if(rect == null) {
+        await browser.close();
     }
+    else {
+        const shot1 = await page.screenshot({path: 'skills1.jpeg', type:"jpeg",
+        clip: {
+            x: rect.left+10,
+            y: rect.top+5,
+            width: rect.width,
+            height: rect.height
+        }
+        });
+    }
+}
 
 
 bot.login(token);
